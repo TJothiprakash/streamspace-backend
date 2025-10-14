@@ -39,8 +39,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             jwt = authHeader.substring(7);
             username = jwtUtils.extractUsername(jwt);
+            logger.debug("JWT extracted: {}, username: {}" + username + " " + jwt);
+        } else {
+            logger.debug("No Authorization header or not Bearer");
         }
 
+    logger.info("setting the security context //......");
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
             if (jwtUtils.validateToken(jwt)) {
@@ -49,8 +53,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                                 userDetails, null, userDetails.getAuthorities());
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
+                logger.info("securitu context auth token is iset " + authToken);
             }
         }
+        logger.info("beofre auth filter");
         filterChain.doFilter(request, response);
+        logger.info("after e auth filter");
     }
 }
