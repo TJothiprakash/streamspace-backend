@@ -3,6 +3,8 @@ package com.jp.streamspace.vidoestream.mapper;
 import com.jp.streamspace.vidoestream.modal.Video;
 import org.apache.ibatis.annotations.*;
 
+import java.util.List;
+
 @Mapper
 public interface VideoMapper {
 
@@ -30,6 +32,49 @@ public interface VideoMapper {
     int updateS3Key(@Param("id") Integer id, @Param("s3Key") String s3Key);
     @Update("UPDATE videos SET master_key = #{masterKey}, updated_at = now() WHERE id = #{id}")
     int updateMasterKey(@Param("id") Integer id, @Param("masterKey") String masterKey);
+
+    @Select("""
+    SELECT * FROM videos 
+    WHERE uploaded_by = #{userId}
+    ORDER BY created_at DESC
+    LIMIT #{limit} OFFSET #{offset}
+""")
+    List<Video> findUserVideos(@Param("userId") int userId,
+                               @Param("limit") int limit,
+                               @Param("offset") int offset);
+
+    @Select("SELECT COUNT(*) FROM videos WHERE uploaded_by = #{userId}")
+    int countUserVideos(@Param("userId") int userId);
+
+
+    @Select("""
+    SELECT * FROM videos 
+    WHERE is_private = false 
+    ORDER BY created_at DESC
+    LIMIT #{limit} OFFSET #{offset}
+""")
+    List<Video> findAllPublicVideos(@Param("limit") int limit,
+                                    @Param("offset") int offset);
+
+    @Select("SELECT COUNT(*) FROM videos WHERE is_private = false")
+    int countPublicVideos();
+
+
+    @Select("""
+    SELECT * FROM videos 
+    WHERE uploaded_by = #{userId} AND is_private = true
+    ORDER BY created_at DESC
+    LIMIT #{limit} OFFSET #{offset}
+""")
+    List<Video> findPrivateVideos(@Param("userId") int userId,
+                                  @Param("limit") int limit,
+                                  @Param("offset") int offset);
+
+    @Select("""
+    SELECT COUNT(*) FROM videos 
+    WHERE uploaded_by = #{userId} AND is_private = true
+""")
+    int countPrivateVideos(@Param("userId") int userId);
 
 
 }

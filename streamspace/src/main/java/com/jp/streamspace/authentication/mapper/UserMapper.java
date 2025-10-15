@@ -51,4 +51,6 @@ public interface UserMapper {
     @Update("UPDATE users SET password = #{password}, reset_token = NULL, reset_token_expiry = NULL WHERE user_id = #{userId}")
     void updatePassword(User user);
 
+    @Select("SELECT * FROM users WHERE email = #{username}")
+    User findByUsername(String username);
 }

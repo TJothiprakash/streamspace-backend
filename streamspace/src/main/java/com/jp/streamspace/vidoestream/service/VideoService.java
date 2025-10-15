@@ -1,5 +1,6 @@
 package com.jp.streamspace.vidoestream.service;
 
+import com.jp.streamspace.authentication.mapper.UserMapper;
 import com.jp.streamspace.vidoestream.config.RabbitConfig;
 import com.jp.streamspace.vidoestream.dto.NotifyUploadRequest;
 import com.jp.streamspace.vidoestream.dto.PresignRequest;
@@ -11,6 +12,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class VideoService {
@@ -20,11 +24,13 @@ public class VideoService {
     private final VideoMapper videoMapper;
     private final StorageService storageService;
     private final RabbitTemplate rabbitTemplate;
+    private final UserMapper userMapper;
 
-    public VideoService(VideoMapper videoMapper, StorageService storageService, RabbitTemplate rabbitTemplate) {
+    public VideoService(VideoMapper videoMapper, StorageService storageService, RabbitTemplate rabbitTemplate, UserMapper userMapper) {
         this.videoMapper = videoMapper;
         this.storageService = storageService;
         this.rabbitTemplate = rabbitTemplate;
+        this.userMapper = userMapper;
     }
 
     /**
@@ -137,4 +143,61 @@ public class VideoService {
                     '}';
         }
     }
+
+
+    public Map<String, Object> getAllPublicVideos(int page, int limit) {
+        int offset = (page - 1) * limit;
+        List<Video> videos = videoMapper.findAllPublicVideos(limit, offset);
+        int totalCount = videoMapper.countPublicVideos();
+        int totalPages = (int) Math.ceil((double) totalCount / limit);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("videos", videos);
+        response.put("totalCount", totalCount);
+        response.put("currentPage", page);
+        response.put("totalPages", totalPages);
+        return response;
+    }
+
+
+    // 🔹 Helper method to map username -> userId
+    public int getUserIdFromUsername(String username) {
+        var user = userMapper.findByUsername(username);
+        if (user == null) {
+            throw new RuntimeException("User not found: " + username);
+        }
+        return user.getUserId();
+    }
+
+    public Map<String, Object> getUserVideos(String username, int page, int limit) {
+        int userId = getUserIdFromUsername(username);
+        int offset = (page - 1) * limit;
+        List<Video> videos = videoMapper.findUserVideos(userId, limit, offset);
+        int totalCount = videoMapper.countUserVideos(userId);
+        int totalPages = (int) Math.ceil((double) totalCount / limit);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("videos", videos);
+        response.put("totalCount", totalCount);
+        response.put("currentPage", page);
+        response.put("totalPages", totalPages);
+        return response;
+    }
+
+    public Map<String, Object> getPrivateVideos(String username, int page, int limit) {
+        int userId = getUserIdFromUsername(username);
+        int offset = (page - 1) * limit;
+        List<Video> videos = videoMapper.findPrivateVideos(userId, limit, offset);
+        int totalCount = videoMapper.countPrivateVideos(userId);
+        int totalPages = (int) Math.ceil((double) totalCount / limit);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("videos", videos);
+        response.put("totalCount", totalCount);
+        response.put("currentPage", page);
+        response.put("totalPages", totalPages);
+        return response;
+    }
+
+
 }
