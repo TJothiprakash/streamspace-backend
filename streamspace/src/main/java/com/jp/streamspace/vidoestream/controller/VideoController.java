@@ -41,7 +41,7 @@ public class VideoController {
         VideoService.PresignResult result = videoService.createPresignedUpload(request);
 
         logger.info("Generated presigned URL for videoId={} and s3Key={}", result.videoId, result.s3Key);
-
+        logger.info("result.url : " + result.url);
         PresignResponse response = new PresignResponse(result.videoId, result.url, result.s3Key);
         return ResponseEntity.ok(response);
     }
@@ -100,4 +100,38 @@ public class VideoController {
             return "❌ Failed to send job for videoId=" + videoId;
         }
     }
+    @GetMapping("/user")
+    public ResponseEntity<?> getUserVideos(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int limit) {
+
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+
+        var result = videoService.getUserVideos(username, page, limit);
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping
+    public ResponseEntity<?> getAllVideos(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int limit) {
+
+        var result = videoService.getAllPublicVideos(page, limit);
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/private")
+    public ResponseEntity<?> getPrivateVideos(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int limit) {
+
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+        logger.info("Fetching private videos for user: {}", username);
+
+        var result = videoService.getPrivateVideos(username, page, limit);
+        return ResponseEntity.ok(result);
+    }
+
 }
