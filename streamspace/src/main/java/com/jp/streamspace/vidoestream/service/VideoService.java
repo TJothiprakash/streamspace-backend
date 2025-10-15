@@ -59,6 +59,7 @@ public class VideoService {
 
         return new PresignResult(v.getId(), presignedUrl, s3Key);
     }
+
     /**
      * Called by client after upload completes.
      * If object exists -> update DB and publish job.
@@ -96,11 +97,12 @@ public class VideoService {
         String masterUrl = storageService.objectUrl(s3Key);
 
         // Prepare payload for transcoding job
+        // Prepare payload for transcoding job including s3Key
         String payload = String.format(
-                "{\"videoId\":%d,\"inputUrl\":\"%s\",\"outputPrefix\":\"videos/%d\"}",
-                id, masterUrl, id
+                "{\"videoId\":%d,\"s3Key\":\"%s\",\"inputUrl\":\"%s\",\"outputPrefix\":\"videos/%d\"}",
+                id, s3Key, masterUrl, id
         );
-
+        log.info("payload : " + payload);
         log.info("Publishing transcoding job for videoId={} to queue='{}'", id, RabbitConfig.TRANSCODE_QUEUE);
         rabbitTemplate.convertAndSend(RabbitConfig.TRANSCODE_QUEUE, payload);
 

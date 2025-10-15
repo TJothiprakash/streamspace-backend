@@ -41,7 +41,7 @@ public class VideoController {
         VideoService.PresignResult result = videoService.createPresignedUpload(request);
 
         logger.info("Generated presigned URL for videoId={} and s3Key={}", result.videoId, result.s3Key);
-
+        logger.info("result.url : " + result.url);
         PresignResponse response = new PresignResponse(result.videoId, result.url, result.s3Key);
         return ResponseEntity.ok(response);
     }
@@ -100,4 +100,6 @@ public class VideoController {
             return "❌ Failed to send job for videoId=" + videoId;
         }
     }
+
+
 }
